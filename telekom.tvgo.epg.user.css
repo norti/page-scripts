@@ -1,0 +1,16 @@
+/* ==UserStyle==
+@name         Telekom TVGO EPG aktuális műsor magenta háttérszínezés
+@version      20260901.0900
+@namespace    norti
+@author       norti - https://bsky.app/profile/norti79.bsky.social
+@description  Telekom TVGO EPG aktuális műsor magenta háttérszínezés
+@license      MIT
+==/UserStyle== */
+
+@-moz-document url-prefix("https://player.telekomtvgo.hu/epg") {
+.ewxqxw {
+    background-color: rgb(226 0 116) !important;
+    /*    background-color: rgb(4, 143, 31) !important; */
+    border-radius: 16px !important;
+}
+}

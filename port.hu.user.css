@@ -1,0 +1,17 @@
+/* ==UserStyle==
+@name         port.hu kiemelt műsor háttér színezés
+@version      20260901.0900
+@namespace    norti
+@author       norti - https://bsky.app/profile/norti79.bsky.social
+@description  port.hu kiemelt műsor háttér színezés
+@license      MIT
+==/UserStyle== */
+
+@-moz-document url-prefix("https://port.hu/") {
+
+.shadow_inset_4px_0px_0px_0px_\#979797:not(#\#):not(#\#):not(#\#):not(#\#) {
+    background-color: #11f2009e !important;
+    border-radius: 10px !important;
+    box-shadow: inset 0px 0px 0px 1px #000 !important;
+}
+}
