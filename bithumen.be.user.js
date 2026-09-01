@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         bithumen.be [quality&info badges + advanced live filters]
 // @namespace    http://bithumen.be/
-// @version      6.1
-// @description  bithumen add-on
-// @author       norti + Gemini AI
+// @version      9.2
+// @description  bithumen add-on badge-elt info sorral, élő szűrőkkel (SD gombbal + 1080i + BDRip), al-verziókkal és okos kategória szűréssel
+// @author       norti + Vector + Gemini AI + a-sync
 // @match        https://bithumen.be/browse.php*
 // @match        https://bithumen.be/watchlist.php*
 // @icon         https://bithumen.be/favicon.ico
@@ -16,8 +16,50 @@
 (function() {
     'use strict';
 
-    // 1. STÍLUSOK BESZÚRÁSA (Custom CSS)
+    // KATEGÓRIA DEFINÍCIÓK ELŐKÉSZÍTÉSE
+    const ALL_CATEGORIES = {
+        23: "Film/Hun/SD",
+        24: "Film/Hun/DVD-R",
+        25: "Film/Hun/720p",
+        37: "Film/Hun/1080p",
+        33: "Film/Hun/Blu-ray",
+        30: "XXX/SD",
+        19: "Film/Eng/SD",
+        20: "Film/Eng/DVD-R",
+        5:  "Film/Eng/720p",
+        39: "Film/Eng/1080p",
+        40: "Film/Eng/Blu-ray",
+        34: "XXX/HD",
+        7:  "Sorozat/Hun/SD",
+        41: "Sorozat/Hun/HD",
+        26: "Sorozat/Eng/SD",
+        42: "Sorozat/Eng/HD",
+        28: "eBook/Hun",
+        29: "eBook/Eng",
+        9:  "Mp3/Hun",
+        35: "Lossless/Hun",
+        1:  "Programok/ISO",
+        4:  "Játékok/ISO",
+        31: "Játékok/PS",
+        36: "Játékok/Wii",
+        6:  "Mp3/Eng",
+        38: "Lossless/Eng",
+        22: "Programok/egyéb",
+        21: "Játékok/Rip/Dox",
+        32: "Játékok/Xbox360",
+        27: "Klipek"
+    };
+
+    // KIZÁRÓLAG EZEKNÉL A KATEGÓRIÁKNÁL JELENNEK MEG A VIDEÓ BADGE-EK (Group 1-3)
+    const VIDEO_CATS = [23, 24, 25, 37, 33, 30, 19, 20, 5, 39, 40, 34, 7, 41, 26, 42];
+
+    // 1. STÍLUSOK BESZÚRÁSA (Custom CSS + Pontos Logó Elrejtés)
     const customCSS = `
+        /* Logó konténer elrejtése */
+        #logoholderdiv {
+            display: none !important;
+        }
+
         /* Szűrő Panel */
         #bh-filter-panel {
             background-color: #1a1a1a;
@@ -47,7 +89,8 @@
             margin-right: 4px;
             min-width: 75px;
         }
-        /* Fehér torrentnevek és urlek */
+
+        /* Fehér torrentnevek és alapértelmezett linkek */
         a:link, a:visited {
            color: #ffffff !important;
         }
@@ -100,7 +143,7 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.4);
         }
 
-        /* Reset Gomb - Első sor jobb szélére igazítva */
+        /* Reset Gomb */
         #bh-reset-btn {
             background-color: #d9534f;
             border: 1px solid #c9302c;
@@ -122,6 +165,7 @@
         .btn-res-2160p.active { background-color: #d9534f !important; }
         .btn-res-1080p.active { background-color: #0275d8 !important; }
         .btn-res-720p.active  { background-color: #5cb85c !important; }
+        .btn-res-sd.active    { background-color: #6c757d !important; }
 
         .btn-lang-hun.active   {
             background: linear-gradient(to bottom, #ce2939 33%, #ffffff 33%, #ffffff 66%, #477050 66%) !important;
@@ -138,7 +182,7 @@
         .btn-show-row4.active  { background-color: #17a2b8 !important; }
         .btn-show-ser.active   { background-color: #e84393 !important; }
 
-        /* Kereső Konténer külön sorban, balra igazítva */
+        /* Kereső Konténer */
         .bh-search-row {
             display: flex;
             align-items: center;
@@ -204,6 +248,7 @@
             text-transform: uppercase;
             position: relative;
             top: -1px;
+            text-decoration: none !important;
         }
 
         /* Piros ÚJ Badge */
@@ -213,11 +258,10 @@
             margin-left: 6px !important;
         }
 
-        /* DL Badge (Kék) & RSS Badge-ek (Háromfázisú állapotok) */
+        /* DL Badge & RSS Badge */
         .dl-badge {
             background-color: #0275d8 !important;
             color: #ffffff !important;
-            text-decoration: none !important;
             margin: 0 !important;
             cursor: pointer;
         }
@@ -226,31 +270,81 @@
             color: #ffffff !important;
         }
 
-        /* RSS Badge - Alapállapot (RSS+) */
         .rss-badge {
             background-color: #fd7e14 !important;
             color: #ffffff !important;
-            text-decoration: none !important;
             margin: 0 !important;
             cursor: pointer;
             user-select: none;
         }
-        .rss-badge:hover {
-            background-color: #e36d0c !important;
+        .rss-badge:hover { background-color: #e36d0c !important; }
+        .rss-badge.rss-added { background-color: #28a745 !important; }
+        .rss-badge.rss-added:hover { background-color: #218838 !important; }
+        .rss-badge.rss-removed { background-color: #dc3545 !important; }
+        .rss-badge.rss-removed:hover { background-color: #c82333 !important; }
+
+        /* MÁSODIK SORI BADGE STÍLUSOK */
+        a.bh-info-badge, a.bh-info-badge:visited, a.bh-info-badge:link {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            font-family: Georgia, serif !important;
+            font-style: italic !important;
+            font-weight: bold !important;
+            font-size: 11px !important;
+            padding: 1px 6px !important;
+            text-transform: lowercase !important;
         }
-        /* RSS Badge - Hozzáadva állapot (RSS &#10003;) */
-        .rss-badge.rss-added {
-            background-color: #28a745 !important;
+        a.bh-info-badge:hover {
+            background-color: #dddddd !important;
+            color: #000000 !important;
         }
-        .rss-badge.rss-added:hover {
-            background-color: #218838 !important;
+
+        a.bh-trailer-badge, a.bh-trailer-badge:visited, a.bh-trailer-badge:link {
+            background-color: #343a40 !important;
+            color: #ffffff !important;
+            font-size: 11px !important;
+            padding: 1px 5px !important;
         }
-        /* RSS Badge - Eltávolítva állapot (RSS-) */
-        .rss-badge.rss-removed {
-            background-color: #dc3545 !important;
+        a.bh-trailer-badge:hover {
+            background-color: #495057 !important;
+            color: #ffffff !important;
         }
-        .rss-badge.rss-removed:hover {
-            background-color: #c82333 !important;
+
+        a.bh-imdb-badge, a.bh-imdb-badge:visited, a.bh-imdb-badge:link {
+            background-color: #f5c518 !important;
+            color: #000000 !important;
+            font-weight: 900 !important;
+            padding: 1px 5px !important;
+            letter-spacing: 0px !important;
+        }
+        a.bh-imdb-badge:hover {
+            background-color: #e2b616 !important;
+            color: #000000 !important;
+        }
+
+        a.bh-genre-badge, a.bh-genre-badge:visited, a.bh-genre-badge:link {
+            background-color: #383838 !important;
+            color: #e0e0e0 !important;
+            font-weight: normal !important;
+            text-transform: lowercase !important;
+            padding: 1px 5px !important;
+        }
+        a.bh-genre-badge:hover {
+            background-color: #4a4a4a !important;
+            color: #ffffff !important;
+        }
+
+        a.bh-others-badge, a.bh-others-badge:visited, a.bh-others-badge:link {
+            background-color: #17a2b8 !important;
+            color: #000000 !important;
+            font-size: 10px !important;
+            font-weight: bold !important;
+            padding: 1px 5px !important;
+            cursor: pointer;
+        }
+        a.bh-others-badge:hover {
+            background-color: #138496 !important;
+            color: #000000 !important;
         }
 
         /* Eredeti ikonok elrejtése */
@@ -258,7 +352,6 @@
             display: none !important;
         }
 
-        /* Cella alsó sorának konténere */
         .bh-badges-bottom-row {
             display: block;
             width: 100%;
@@ -269,10 +362,11 @@
             display: inline-block;
         }
 
-        /* Felbontás */
+        /* Felbontások */
         .res-2160p { background-color: #d9534f !important; }
         .res-1080p { background-color: #0275d8 !important; }
         .res-720p  { background-color: #5cb85c !important; }
+        .res-sd    { background-color: #6c757d !important; }
 
         /* Kép & Hang technológiák & DVD */
         .tech-hdr   { background-color: #f0ad4e !important; color: #000 !important; }
@@ -287,7 +381,7 @@
         .src-bluray { background-color: #6f42c1 !important; }
         .src-webdl  { background-color: #20c997 !important; }
 
-        /* Magyar Zászló Trikolór HUN Badge (Piros-Fehér-Zöld) */
+        /* Magyar Zászló HUN Badge */
         .lang-hun   {
             background: linear-gradient(to bottom, #ce2939 33%, #ffffff 33%, #ffffff 66%, #477050 66%) !important;
             color: #111111 !important;
@@ -295,7 +389,7 @@
         }
         .lang-eng   { background-color: #ffffff !important; color: #000000 !important; }
 
-        /* Release Group (kattintható) & Rózsaszín Series Badge */
+        /* Release Group & Series Badge */
         .grp-tag {
             background-color: #495057 !important;
             cursor: pointer !important;
@@ -306,6 +400,35 @@
             transform: scale(1.05);
         }
         .series-tag { background-color: #e84393 !important; color: #ffffff !important; }
+
+        /* TOVÁBBI VERZIÓK INLINE DOBOZ STÍLUSA */
+        .bh-subreleases-row {
+            background-color: #121212 !important;
+        }
+        .bh-subreleases-container {
+            padding: 8px 12px !important;
+            background-color: #181818 !important;
+            border: 1px dashed #444 !important;
+            border-radius: 4px !important;
+            margin: 4px 10px 8px 10px !important;
+            overflow-x: auto;
+        }
+        .bh-subreleases-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            font-size: 11px !important;
+        }
+        .bh-subreleases-table td, .bh-subreleases-table th {
+            padding: 5px 8px !important;
+            border-bottom: 1px solid #282828 !important;
+            vertical-align: middle !important;
+        }
+        .bh-subreleases-loading {
+            color: #17a2b8;
+            font-weight: bold;
+            font-size: 11px;
+            padding: 6px;
+        }
     `;
 
     const styleNode = document.createElement('style');
@@ -320,6 +443,7 @@
         'res-2160p': true,
         'res-1080p': true,
         'res-720p': true,
+        'res-sd': true,
         'lang-hun': true,
         'lang-eng': true,
         'type-movie': true,
@@ -338,8 +462,18 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(activeFilters));
     }
 
+    // Segédfüggvény: Kategória ID kinyerése
+    function getCategoryIdFromRow(row) {
+        const catLink = row.querySelector('a[href*="cat="]');
+        if (catLink) {
+            const match = catLink.href.match(/cat=(\d+)/);
+            if (match) return parseInt(match[1], 10);
+        }
+        return null;
+    }
 
-    // 3. SZŰRŐ PANEL & ÉLŐ KERESŐ LÉTREHOZÁSA
+
+    // 3. SZŰRŐ PANEL LÉTREHOZÁSA
     function createFilterPanel() {
         const targetContainer = document.querySelector('#lsForm') || document.querySelector('#maintd');
         if (!targetContainer || document.querySelector('#bh-filter-panel')) return;
@@ -347,12 +481,12 @@
         const panel = document.createElement('div');
         panel.id = 'bh-filter-panel';
         panel.innerHTML = `
-            <!-- 1. SOR: SZŰRÉS + ALAPHELYZET GOMB -->
             <div class="bh-panel-row">
                 <strong>Szűrés:</strong>
                 <button class="bh-filter-btn btn-res-2160p ${activeFilters['res-2160p'] ? 'active' : ''}" data-filter="res-2160p">4K | 2160p</button>
                 <button class="bh-filter-btn btn-res-1080p ${activeFilters['res-1080p'] ? 'active' : ''}" data-filter="res-1080p">FHD | 1080p</button>
                 <button class="bh-filter-btn btn-res-720p ${activeFilters['res-720p'] ? 'active' : ''}" data-filter="res-720p">HD | 720p</button>
+                <button class="bh-filter-btn btn-res-sd ${activeFilters['res-sd'] ? 'active' : ''}" data-filter="res-sd">SD | 480p</button>
                 <button class="bh-filter-btn btn-lang-hun ${activeFilters['lang-hun'] ? 'active' : ''}" data-filter="lang-hun">HUN</button>
                 <button class="bh-filter-btn btn-lang-eng ${activeFilters['lang-eng'] ? 'active' : ''}" data-filter="lang-eng">ENG</button>
                 <button class="bh-filter-btn btn-type-movie ${activeFilters['type-movie'] ? 'active' : ''}" data-filter="type-movie">Film</button>
@@ -361,7 +495,6 @@
                 <button id="bh-reset-btn" title="Sz&#251;r&#246;k alaphelyzetbe &#225;ll&#237;t&#225;sa">↺ Alaphelyzet</button>
             </div>
 
-            <!-- 2. SOR: CÍMKÉK (BADGE KI/BE) -->
             <div class="bh-panel-row">
                 <strong>Címkék:</strong>
                 <button class="bh-filter-btn btn-show-row1 ${activeFilters['show-row1'] ? 'active' : ''}" data-filter="show-row1" title="Felbont&#225;s">Felbont&#225;s</button>
@@ -371,7 +504,6 @@
                 <button class="bh-filter-btn btn-show-ser ${activeFilters['show-ser'] ? 'active' : ''}" data-filter="show-ser" title="Series badge">Sorozat</button>
             </div>
 
-            <!-- 3. SOR: ÉLŐ SZŰRÉS -->
             <div class="bh-search-row">
                 <strong>Élő szűrés:</strong>
                 <div class="bh-search-wrapper">
@@ -384,7 +516,6 @@
 
         targetContainer.parentNode.insertBefore(panel, targetContainer.nextSibling);
 
-        // Gombok eseménykezelői
         panel.querySelectorAll('.bh-filter-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const filterKey = this.getAttribute('data-filter');
@@ -401,7 +532,6 @@
             });
         });
 
-        // Reset gomb eseménykezelője
         const resetBtn = panel.querySelector('#bh-reset-btn');
         resetBtn.addEventListener('click', function() {
             activeFilters = Object.assign({}, defaultFilters);
@@ -422,7 +552,6 @@
             applyBadgeVisibility();
         });
 
-        // Kereső & Törlés gomb eseménykezelői
         const searchInput = panel.querySelector('#bh-search-input');
         const clearBtn = panel.querySelector('#bh-search-clear');
 
@@ -449,39 +578,46 @@
         clearBtn.addEventListener('click', clearSearch);
     }
 
-    // Sorok elrejtése / megjelenítése szűrők + kereső alapján
     function applyRowFiltering() {
         const rows = document.querySelectorAll('#torrenttable tr');
         let totalRows = 0;
         let visibleRows = 0;
 
+        const isVideoFilterActive = !activeFilters['res-2160p'] || !activeFilters['res-1080p'] || !activeFilters['res-720p'] || !activeFilters['res-sd'] || !activeFilters['type-movie'] || !activeFilters['type-series'];
+
         rows.forEach(row => {
-            if (row.querySelector('td.colhead')) return;
+            if (row.querySelector('td.colhead') || row.classList.contains('bh-subreleases-row')) return;
 
             totalRows++;
             let showRow = true;
 
-            // Felbontás szűrés
-            if (!activeFilters['res-2160p'] && row.querySelector('.res-2160p')) showRow = false;
-            if (!activeFilters['res-1080p'] && row.querySelector('.res-1080p')) showRow = false;
-            if (!activeFilters['res-720p'] && row.querySelector('.res-720p')) showRow = false;
+            const catId = getCategoryIdFromRow(row);
+            const isVideoCategory = catId ? VIDEO_CATS.includes(catId) : true;
 
-            // Nyelv szűrés
-            if (row.querySelector('.bh-badges-bottom-row')) {
+            if (isVideoFilterActive && !isVideoCategory) {
+                showRow = false;
+            }
+
+            if (showRow && isVideoCategory) {
+                if (!activeFilters['res-2160p'] && row.querySelector('.res-2160p')) showRow = false;
+                if (!activeFilters['res-1080p'] && row.querySelector('.res-1080p')) showRow = false;
+                if (!activeFilters['res-720p'] && row.querySelector('.res-720p')) showRow = false;
+                if (!activeFilters['res-sd'] && row.querySelector('.res-sd')) showRow = false;
+
+                const isSeries = !!row.querySelector('.series-tag');
+                if (!activeFilters['type-series'] && isSeries) showRow = false;
+                if (!activeFilters['type-movie'] && !isSeries) showRow = false;
+            }
+
+            if (showRow && row.querySelector('.bh-badges-bottom-row')) {
                 const isHun = !!row.querySelector('.lang-hun');
                 const isEng = !!row.querySelector('.lang-eng');
 
                 if (!activeFilters['lang-hun'] && isHun && !isEng) showRow = false;
                 if (!activeFilters['lang-eng'] && isEng && !isHun) showRow = false;
                 if (!activeFilters['lang-hun'] && !activeFilters['lang-eng']) showRow = false;
-
-                // Film / Sorozat szűrés
-                const isSeries = !!row.querySelector('.series-tag');
-                if (!activeFilters['type-series'] && isSeries) showRow = false;
-                if (!activeFilters['type-movie'] && !isSeries) showRow = false;
             }
 
-            // Szöveges élő keresés
             if (showRow && searchQuery !== '') {
                 const rowText = row.textContent.toLowerCase();
                 if (!rowText.includes(searchQuery)) {
@@ -490,17 +626,21 @@
             }
 
             row.style.display = showRow ? '' : 'none';
+
+            const nextRow = row.nextElementSibling;
+            if (nextRow && nextRow.classList.contains('bh-subreleases-row')) {
+                nextRow.style.display = showRow ? '' : 'none';
+            }
+
             if (showRow) visibleRows++;
         });
 
-        // Találati számláló frissítése
         const countDisplay = document.querySelector('#bh-count-display');
         if (countDisplay) {
             countDisplay.textContent = `(${visibleRows} / ${totalRows})`;
         }
     }
 
-    // Badge csoportok és a SERIES gomb láthatóságának frissítése
     function applyBadgeVisibility() {
         for (let i = 1; i <= 5; i++) {
             const groupElements = document.querySelectorAll(`.bh-badge-group-${i}`);
@@ -511,7 +651,7 @@
         }
     }
 
-    // 4. RSS TOGGLE AJAX LOGIKA (Encoding Fix)
+    // 4. RSS TOGGLE LOGIKA
     function handleRSSToggle(badgeElem, torrentId) {
         let currentState = badgeElem.getAttribute('data-state') || 'initial';
         let action = (currentState === 'added') ? 'del' : 'add';
@@ -527,12 +667,7 @@
         .then(response => response.text())
         .then(text => {
             let data;
-            try {
-                data = JSON.parse(text);
-            } catch (e) {
-                // Ha a szerver válasza nem tiszta JSON, szövegként értékeljük
-                data = text;
-            }
+            try { data = JSON.parse(text); } catch (e) { data = text; }
 
             if ((Array.isArray(data) && data[0] == 1) || (typeof data === 'string' && data.length > 0)) {
                 if (action === 'add') {
@@ -556,8 +691,204 @@
         });
     }
 
+    // 5. TOVÁBBI VERZIÓK TÁBLÁZATÁNAK TELJES BADGE-ELÉSE
+    function processSubTable(subTable, parentCatId) {
+        subTable.className = 'bh-subreleases-table';
+        const rows = subTable.querySelectorAll('tr');
 
-    // 5. MŰVELETEK OSLOP BESZÚRÁSA ÉS TÁBLÁZAT FELDOLGOZÁSA
+        rows.forEach(row => {
+            const nameCell = row.querySelector('td[align="left"]') || row.children[1];
+            if (!nameCell) return;
+
+            const catId = getCategoryIdFromRow(row) || parentCatId;
+            const isVideoCategory = catId ? VIDEO_CATS.includes(catId) : true;
+
+            const nameLink = nameCell.querySelector('a[href^="details.php"]');
+            if (nameLink) {
+                let torrentId = null;
+                const idMatch = nameLink.href.match(/id=(\d+)/);
+                if (idMatch) torrentId = idMatch[1];
+
+                // DL / RSS ikonok cseréje
+                nameCell.querySelectorAll('a').forEach(a => {
+                    const href = a.getAttribute('href') || '';
+                    const img = a.querySelector('img');
+
+                    if (href.includes('download.php')) {
+                        a.className = 'bh-badge dl-badge';
+                        a.textContent = 'DL';
+                        a.title = 'Letöltés';
+                        a.innerHTML = 'DL';
+                    } else if (href.includes('torrentmark.php') || href.includes('personalrss') || (img && img.alt && img.alt.toLowerCase().includes('rss'))) {
+                        if (torrentId) {
+                            const rssBadge = document.createElement('span');
+                            rssBadge.className = 'bh-badge rss-badge';
+                            rssBadge.innerHTML = 'RSS+';
+                            rssBadge.title = 'Egyéni RSS-hez adás';
+                            rssBadge.setAttribute('data-state', 'initial');
+
+                            rssBadge.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleRSSToggle(this, torrentId);
+                            });
+
+                            a.parentNode.replaceChild(rssBadge, a);
+                        }
+                    }
+                });
+
+                // Badge-ek generálása
+                if (!nameCell.querySelector('.bh-badges-bottom-row')) {
+                    const text = nameLink.textContent;
+                    const badgesContainer = document.createElement('div');
+                    badgesContainer.className = 'bh-badges-bottom-row';
+
+                    const group1 = document.createElement('div'); group1.className = 'bh-badge-group bh-badge-group-1';
+                    const group2 = document.createElement('div'); group2.className = 'bh-badge-group bh-badge-group-2';
+                    const group3 = document.createElement('div'); group3.className = 'bh-badge-group bh-badge-group-3';
+                    const group4 = document.createElement('div'); group4.className = 'bh-badge-group bh-badge-group-4';
+
+                    if (isVideoCategory) {
+                        // Felbontás
+                        const has2160p = text.includes('2160p') || text.includes('UHD') || text.includes('4K');
+                        const has1080p = text.includes('1080p') || text.includes('1080i');
+                        const has720p  = text.includes('720p');
+
+                        if (has2160p) addBadge(group1, '4K', 'bh-badge res-2160p');
+                        else if (has1080p) addBadge(group1, '1080p', 'bh-badge res-1080p');
+                        else if (has720p) addBadge(group1, 'HD', 'bh-badge res-720p');
+                        else addBadge(group1, 'SD', 'bh-badge res-sd');
+
+                        if (text.includes('HDR')) addBadge(group1, 'HDR', 'bh-badge tech-hdr');
+                        if (text.includes('DV.') || text.includes('DoVi') || text.includes('Dolby.Vision')) addBadge(group1, 'DoVi', 'bh-badge tech-dovi');
+
+                        // Audio & Codec + BDRip hozzáadva a BR csoporthoz
+                        if (text.includes('Atmos')) addBadge(group2, 'Atmos', 'bh-badge tech-atmos');
+                        else if (text.includes('DDP') || text.includes('DD+') || text.includes('DD5')) addBadge(group2, '5.1', 'bh-badge tech-audio');
+                        else if (text.includes('DD2') || text.includes('2.0')) addBadge(group2, 'STEREO', 'bh-badge tech-audio');
+                        else if (text.includes('DTS')) addBadge(group2, 'DTS', 'bh-badge tech-audio');
+
+                        if (text.includes('REMUX')) addBadge(group2, 'REMUX', 'bh-badge tech-remux');
+                        if (text.includes('BluRay') || text.includes('Bluray') || text.includes('BDRip') || text.includes('BD-Rip')) addBadge(group2, 'BR', 'bh-badge src-bluray');
+                        else if (text.includes('WEB-DL') || text.includes('WEBDL') || text.includes('WEB')) addBadge(group2, 'WEB-DL', 'bh-badge src-webdl');
+                        else if (text.includes('DVDR') || text.includes('DVD')) addBadge(group2, 'DVD', 'bh-badge tech-dvd');
+
+                        if (text.includes('x265') || text.includes('H.265') || text.includes('HEVC')) addBadge(group2, 'x265', 'bh-badge tech-codec');
+                        else if (text.includes('x264') || text.includes('H.264')) addBadge(group2, 'x264', 'bh-badge tech-codec');
+
+                        // Nyelv
+                        const isHun = text.includes('HUN') || text.includes('HuN') || text.includes('Hun') || text.includes('.HU.');
+                        const isEng = text.includes('ENG') || text.includes('Eng') || text.includes('.EN.') || !isHun;
+
+                        if (isHun) addBadge(group3, 'HUN', 'bh-badge lang-hun');
+                        if (isEng) addBadge(group3, 'ENG', 'bh-badge lang-eng');
+                    }
+
+                    // Release Csoport (MINDEN KATEGÓRIÁNÁL MEGJELENIK)
+                    const rlsMatch = text.match(/-([A-Za-z0-9]+)$/);
+                    if (rlsMatch && rlsMatch[1]) {
+                        const grpBadge = addBadge(group4, rlsMatch[1], 'bh-badge grp-tag');
+                        grpBadge.title = `Kattints a(z) "${rlsMatch[1]}" szűréséhez`;
+                        grpBadge.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            const searchInput = document.querySelector('#bh-search-input');
+                            const clearBtn = document.querySelector('#bh-search-clear');
+                            if (searchInput) {
+                                searchInput.value = rlsMatch[1];
+                                searchQuery = rlsMatch[1].toLowerCase().trim();
+                                if (clearBtn) clearBtn.style.display = 'inline';
+                                applyRowFiltering();
+                                searchInput.focus();
+                            }
+                        });
+                    }
+
+                    if (group1.children.length > 0) badgesContainer.appendChild(group1);
+                    if (group2.children.length > 0) badgesContainer.appendChild(group2);
+                    if (group3.children.length > 0) badgesContainer.appendChild(group3);
+                    if (group4.children.length > 0) badgesContainer.appendChild(group4);
+
+                    if (badgesContainer.children.length > 0) {
+                        nameCell.appendChild(badgesContainer);
+                    }
+                }
+            }
+        });
+    }
+
+    // 6. TOVÁBBI VERZIÓK INLINE BETÖLTÉSE
+    function toggleSubReleases(othersLink, parentRow) {
+        let subRow = parentRow.nextElementSibling;
+
+        if (subRow && subRow.classList.contains('bh-subreleases-row')) {
+            if (subRow.style.display === 'none') {
+                subRow.style.display = '';
+                othersLink.innerHTML = '-🠇';
+            } else {
+                subRow.style.display = 'none';
+                othersLink.innerHTML = '+🠇';
+            }
+            return;
+        }
+
+        const colCount = parentRow.children.length;
+        subRow = document.createElement('tr');
+        subRow.className = 'bh-subreleases-row';
+
+        const subTd = document.createElement('td');
+        subTd.colSpan = colCount;
+        subTd.className = 'clear';
+
+        const container = document.createElement('div');
+        container.className = 'bh-subreleases-container';
+        container.innerHTML = '<div class="bh-subreleases-loading">További verziók betöltése...</div>';
+
+        subTd.appendChild(container);
+        subRow.appendChild(subTd);
+        parentRow.parentNode.insertBefore(subRow, parentRow.nextSibling);
+
+        othersLink.innerHTML = '-🠇';
+
+        const parentCatId = getCategoryIdFromRow(parentRow);
+
+        fetch(othersLink.href)
+            .then(res => res.arrayBuffer())
+            .then(buffer => {
+                const decoder = new TextDecoder('iso-8859-2');
+                const htmlText = decoder.decode(buffer);
+
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlText, 'text/html');
+
+                let subTable = null;
+                const allTables = doc.querySelectorAll('table');
+
+                allTables.forEach(tbl => {
+                    const txt = tbl.textContent;
+                    if (txt.includes('Típus') && txt.includes('Név') && txt.includes('Méret') && txt.includes('Seed')) {
+                        subTable = tbl;
+                    }
+                });
+
+                if (subTable) {
+                    container.innerHTML = '';
+                    processSubTable(subTable, parentCatId);
+                    container.appendChild(subTable);
+                    applyBadgeVisibility();
+                } else {
+                    container.innerHTML = '<div style="color: #d9534f; padding: 4px;">Nem találhatók további verziók ezen a linken.</div>';
+                }
+            })
+            .catch(err => {
+                console.error('Sub-releases load error:', err);
+                container.innerHTML = '<div style="color: #d9534f; padding: 4px;">Hiba történt a verziók betöltése közben.</div>';
+            });
+    }
+
+    // 7. TÁBLÁZAT ÉS BADGE-EK FELDOLGOZÁSA
     function processTable() {
         const table = document.querySelector('#torrenttable');
         if (!table) return;
@@ -583,18 +914,20 @@
         const rows = table.querySelectorAll('tr');
 
         rows.forEach(row => {
-            if (row.querySelector('td.colhead')) return;
+            if (row.querySelector('td.colhead') || row.classList.contains('bh-subreleases-row')) return;
 
             const nameCell = row.querySelector('td[align="left"]');
             const nameLink = nameCell ? nameCell.querySelector('a[href^="details.php"]') : null;
 
             if (nameLink) {
-                // Torrent ID kinyerése a részletek linkjéből
                 let torrentId = null;
                 const idMatch = nameLink.href.match(/id=(\d+)/);
                 if (idMatch) torrentId = idMatch[1];
 
-                // Új cella létrehozása DL/RSS gomboknak
+                const catId = getCategoryIdFromRow(row);
+                const isVideoCategory = catId ? VIDEO_CATS.includes(catId) : true;
+
+                // --- 7/A: MŰVELETEK CELLA (DL / RSS) ---
                 let actionCell = row.querySelector('.bh-action-cell');
                 if (!actionCell) {
                     actionCell = document.createElement('td');
@@ -613,14 +946,12 @@
                 }
 
                 const actionContainer = actionCell.querySelector('.bh-action-container');
-
-                // DL és RSS ikonok keresése és átalakítása
                 const allLinks = nameCell.querySelectorAll('a');
+
                 allLinks.forEach(a => {
                     const href = a.getAttribute('href') || '';
                     const img = a.querySelector('img');
 
-                    // DL Badge
                     if (href.includes('download.php')) {
                         if (!actionContainer.querySelector('.dl-badge')) {
                             const dlBadge = document.createElement('a');
@@ -633,7 +964,6 @@
                         a.classList.add('bh-hide-original');
                     }
 
-                    // RSS Badge
                     if (href.includes('torrentmark.php') || href.includes('personalrss') || (img && img.alt && img.alt.toLowerCase().includes('rss'))) {
                         if (!actionContainer.querySelector('.rss-badge') && torrentId) {
                             const rssBadge = document.createElement('span');
@@ -654,7 +984,7 @@
                     }
                 });
 
-                // (Új) felirat detektálása és cseréje ÚJ badge-re
+                // --- 7/B: ÚJ BADGE ---
                 if (!nameCell.querySelector('.new-tag')) {
                     let hasNewFlag = false;
 
@@ -681,7 +1011,71 @@
                     }
                 }
 
-                // Címkék (Badgek) generálása a torrent nevéből
+                // --- 7/C: MÁSODIK SOR BADGE-ELÉSE ---
+                const secondRowDiv = nameCell.querySelector('div:not(.bh-badges-bottom-row)');
+                if (secondRowDiv && !secondRowDiv.getAttribute('data-bh-badged')) {
+                    secondRowDiv.setAttribute('data-bh-badged', 'true');
+
+                    // 1. Info (i) gomb
+                    const infoLink = secondRowDiv.querySelector('a img.Sblue-cover_icon')?.closest('a');
+                    if (infoLink) {
+                        infoLink.className = 'bh-badge bh-info-badge';
+                        infoLink.innerHTML = 'i';
+                        infoLink.title = infoLink.title || 'Információ / Borító';
+                    }
+
+                    // 2. Trailer gomb 🎬
+                    const trailerLink = secondRowDiv.querySelector('a img.Sblue-movie_icon')?.closest('a');
+                    if (trailerLink) {
+                        trailerLink.className = 'bh-badge bh-trailer-badge';
+                        trailerLink.innerHTML = '🎬';
+                        trailerLink.title = 'Előzetes megtekintése';
+                    }
+
+                    // 3. IMDb link
+                    const imdbLink = secondRowDiv.querySelector('a[href*="imdb.com"]');
+                    if (imdbLink) {
+                        const match = imdbLink.textContent.match(/imdb:\s*([\d\.]+)/i);
+                        const rating = match ? match[1] : '';
+                        imdbLink.className = 'bh-badge bh-imdb-badge';
+                        imdbLink.innerHTML = rating ? `IMDb ${rating}` : 'IMDb';
+                    }
+
+                    // 4. Műfajok
+                    const genreSpan = secondRowDiv.querySelector('span');
+                    if (genreSpan) {
+                        const genreLinks = genreSpan.querySelectorAll('a');
+                        genreLinks.forEach(gLink => {
+                            gLink.className = 'bh-badge bh-genre-badge';
+                        });
+
+                        genreSpan.innerHTML = '';
+                        genreLinks.forEach(gLink => genreSpan.appendChild(gLink));
+                    }
+
+                    // 5. További verziók gomb (+🠇)
+                    const othersLink = secondRowDiv.querySelector('a img.Sblue-group_icon')?.closest('a') || secondRowDiv.querySelector('a[href*="others=1"]');
+
+                    if (othersLink) {
+                        othersLink.className = 'bh-badge bh-others-badge';
+                        othersLink.innerHTML = '+🠇';
+
+                        othersLink.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toggleSubReleases(this, row);
+                        });
+                    }
+
+                    // Tisztítás
+                    secondRowDiv.childNodes.forEach(node => {
+                        if (node.nodeType === Node.TEXT_NODE) {
+                            node.textContent = node.textContent.replace(/[()\[\]]/g, '').trim();
+                        }
+                    });
+                }
+
+                // --- 7/D: ALSÓ BADGE CSOPORT (Kategóriafüggő) ---
                 if (!nameCell.querySelector('.bh-badges-bottom-row')) {
                     const text = nameLink.textContent;
                     const badgesContainer = document.createElement('div');
@@ -693,38 +1087,51 @@
                     const group4 = document.createElement('div'); group4.className = 'bh-badge-group bh-badge-group-4';
                     const group5 = document.createElement('div'); group5.className = 'bh-badge-group bh-badge-group-5';
 
-                    // CSOPORT 1 (QTY): Felbontás + Kép technológia
-                    if (text.includes('2160p') || text.includes('UHD') || text.includes('4K')) addBadge(group1, '4K', 'bh-badge res-2160p');
-                    else if (text.includes('1080p')) addBadge(group1, '1080p', 'bh-badge res-1080p');
-                    else if (text.includes('720p')) addBadge(group1, 'HD', 'bh-badge res-720p');
+                    if (isVideoCategory) {
+                        // CSOPORT 1 (QTY)
+                        const has2160p = text.includes('2160p') || text.includes('UHD') || text.includes('4K');
+                        const has1080p = text.includes('1080p') || text.includes('1080i');
+                        const has720p  = text.includes('720p');
 
-                    if (text.includes('HDR')) addBadge(group1, 'HDR', 'bh-badge tech-hdr');
-                    if (text.includes('DV.') || text.includes('DoVi') || text.includes('Dolby.Vision')) addBadge(group1, 'DoVi', 'bh-badge tech-dovi');
-                    if (text.includes('Open.Matte') || text.includes('OpenMatte')) addBadge(group1, 'OpenMatte', 'bh-badge tech-codec');
+                        if (has2160p) addBadge(group1, '4K', 'bh-badge res-2160p');
+                        else if (has1080p) addBadge(group1, '1080p', 'bh-badge res-1080p');
+                        else if (has720p) addBadge(group1, 'HD', 'bh-badge res-720p');
+                        else addBadge(group1, 'SD', 'bh-badge res-sd');
 
-                    // CSOPORT 2 (SND): Hang formátumok, Forrás, Kódolás & DVD
-                    if (text.includes('Atmos')) addBadge(group2, 'Atmos', 'bh-badge tech-atmos');
-                    else if (text.includes('DDP') || text.includes('DD+')) addBadge(group2, '5.1', 'bh-badge tech-audio');
-                    else if (text.includes('DD2')) addBadge(group2, 'STEREO', 'bh-badge tech-audio');
-                    else if (text.includes('DTS')) addBadge(group2, 'DTS', 'bh-badge tech-audio');
-                    else if (text.includes('AAC')) addBadge(group2, 'AAC', 'bh-badge tech-audio');
+                        if (text.includes('HDR')) addBadge(group1, 'HDR', 'bh-badge tech-hdr');
+                        if (text.includes('DV.') || text.includes('DoVi') || text.includes('Dolby.Vision')) addBadge(group1, 'DoVi', 'bh-badge tech-dovi');
+                        if (text.includes('Open.Matte') || text.includes('OpenMatte')) addBadge(group1, 'OpenMatte', 'bh-badge tech-codec');
 
-                    if (text.includes('REMUX')) addBadge(group2, 'REMUX', 'bh-badge tech-remux');
-                    if (text.includes('BluRay') || text.includes('Bluray')) addBadge(group2, 'BR', 'bh-badge src-bluray');
-                    else if (text.includes('WEB-DL') || text.includes('WEBDL') || text.includes('WEB')) addBadge(group2, 'WEB-DL', 'bh-badge src-webdl');
-                    else if (text.includes('DVDR') || text.includes('DVD9') || text.includes('DVD5') || text.includes('DVD-R')) addBadge(group2, 'DVD', 'bh-badge tech-dvd');
+                        // CSOPORT 2 (SND) + BDRip
+                        if (text.includes('Atmos')) addBadge(group2, 'Atmos', 'bh-badge tech-atmos');
+                        else if (text.includes('DDP') || text.includes('DD+')) addBadge(group2, '5.1', 'bh-badge tech-audio');
+                        else if (text.includes('DD2')) addBadge(group2, 'STEREO', 'bh-badge tech-audio');
+                        else if (text.includes('DTS')) addBadge(group2, 'DTS', 'bh-badge tech-audio');
+                        else if (text.includes('AAC')) addBadge(group2, 'AAC', 'bh-badge tech-audio');
 
-                    if (text.includes('x265') || text.includes('H.265') || text.includes('HEVC') || text.includes('H265')) addBadge(group2, 'x265', 'bh-badge tech-codec');
-                    else if (text.includes('x264') || text.includes('H.264') || text.includes('H264')) addBadge(group2, 'x264', 'bh-badge tech-codec');
+                        if (text.includes('REMUX')) addBadge(group2, 'REMUX', 'bh-badge tech-remux');
+                        if (text.includes('BluRay') || text.includes('Bluray') || text.includes('BDRip') || text.includes('BD-Rip')) addBadge(group2, 'BR', 'bh-badge src-bluray');
+                        else if (text.includes('WEB-DL') || text.includes('WEBDL') || text.includes('WEB')) addBadge(group2, 'WEB-DL', 'bh-badge src-webdl');
+                        else if (text.includes('DVDR') || text.includes('DVD9') || text.includes('DVD5') || text.includes('DVD-R')) addBadge(group2, 'DVD', 'bh-badge tech-dvd');
 
-                    // CSOPORT 3 (LNG): Nyelv
-                    const isHun = text.includes('HUN') || text.includes('HuN') || text.includes('Hun') || text.includes('.HU.');
-                    const isEng = text.includes('ENG') || text.includes('Eng') || text.includes('.EN.') || text.includes('English') || !isHun;
+                        if (text.includes('x265') || text.includes('H.265') || text.includes('HEVC') || text.includes('H265')) addBadge(group2, 'x265', 'bh-badge tech-codec');
+                        else if (text.includes('x264') || text.includes('H.264') || text.includes('H264')) addBadge(group2, 'x264', 'bh-badge tech-codec');
 
-                    if (isHun) addBadge(group3, 'HUN', 'bh-badge lang-hun');
-                    if (isEng) addBadge(group3, 'ENG', 'bh-badge lang-eng');
+                        // CSOPORT 3 (LNG)
+                        const isHun = text.includes('HUN') || text.includes('HuN') || text.includes('Hun') || text.includes('.HU.');
+                        const isEng = text.includes('ENG') || text.includes('Eng') || text.includes('.EN.') || text.includes('English') || !isHun;
 
-                    // CSOPORT 4 (RLS): Release Csoport kattintható funkcióval
+                        if (isHun) addBadge(group3, 'HUN', 'bh-badge lang-hun');
+                        if (isEng) addBadge(group3, 'ENG', 'bh-badge lang-eng');
+
+                        // CSOPORT 5 (SER)
+                        const isSeriesMatch = text.match(/\b(?:S\d+(?:E\d+)?|E\d+)\b/i);
+                        if (isSeriesMatch) {
+                            addBadge(group5, 'SERIES', 'bh-badge series-tag');
+                        }
+                    }
+
+                    // CSOPORT 4 (RLS - Minden kategóriánál)
                     const groupMatch = text.match(/-([A-Za-z0-9]+)$/);
                     if (groupMatch && groupMatch[1]) {
                         const grpBadge = addBadge(group4, groupMatch[1], 'bh-badge grp-tag');
@@ -743,12 +1150,6 @@
                                 searchInput.focus();
                             }
                         });
-                    }
-
-                    // CSOPORT 5 (SER): Sorozat azonosítása
-                    const isSeriesMatch = text.match(/\b(?:S\d+(?:E\d+)?|E\d+)\b/i);
-                    if (isSeriesMatch) {
-                        addBadge(group5, 'SERIES', 'bh-badge series-tag');
                     }
 
                     if (group1.children.length > 0) badgesContainer.appendChild(group1);
@@ -773,8 +1174,12 @@
         return span;
     }
 
-    // Futtatás betöltéskor
     function init() {
+        const logoElem = document.getElementById('logoholderdiv');
+        if (logoElem) {
+            logoElem.style.display = 'none';
+        }
+
         createFilterPanel();
         processTable();
         applyRowFiltering();
