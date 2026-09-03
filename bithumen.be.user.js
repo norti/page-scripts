@@ -1,16 +1,14 @@
 // ==UserScript==
 // @name         bithumen.be [quality&info badges + advanced live filters]
 // @namespace    http://bithumen.be/
-// @version      9.2
-// @description  bithumen add-on badge-elt info sorral, élő szűrőkkel (SD gombbal + 1080i + BDRip), al-verziókkal és okos kategória szűréssel
+// @version      9.3
+// @description  bithumen add-on badge-elt info sorral, élő szűrőkkel, igazított 2. sori badge-ekkel és jobbra zárt gombokkal
 // @author       norti + Vector + Gemini AI + a-sync
 // @match        https://bithumen.be/browse.php*
 // @match        https://bithumen.be/watchlist.php*
 // @icon         https://bithumen.be/favicon.ico
 // @grant        none
 // @license      MIT
-// @downloadURL https://update.greasyfork.org/scripts/593750/bithumenbe%20%5Bqualityinfo%20badges%20%2B%20advanced%20live%20filters%5D.user.js
-// @updateURL https://update.greasyfork.org/scripts/593750/bithumenbe%20%5Bqualityinfo%20badges%20%2B%20advanced%20live%20filters%5D.meta.js
 // ==/UserScript==
 
 (function() {
@@ -53,7 +51,7 @@
     // KIZÁRÓLAG EZEKNÉL A KATEGÓRIÁKNÁL JELENNEK MEG A VIDEÓ BADGE-EK (Group 1-3)
     const VIDEO_CATS = [23, 24, 25, 37, 33, 30, 19, 20, 5, 39, 40, 34, 7, 41, 26, 42];
 
-    // 1. STÍLUSOK BESZÚRÁSA (Custom CSS + Pontos Logó Elrejtés)
+    // 1. STÍLUSOK BESZÚRÁSA
     const customCSS = `
         /* Logó konténer elrejtése */
         #logoholderdiv {
@@ -240,22 +238,31 @@
             font-weight: bold !important;
             color: #ffffff !important;
             border-radius: 3px !important;
-            margin: 2px 2px 0 0 !important;
+            margin: 0 !important;
             vertical-align: middle !important;
             letter-spacing: 0.3px !important;
             box-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
             line-height: 12px !important;
             text-transform: uppercase;
-            position: relative;
-            top: -1px;
             text-decoration: none !important;
+            box-sizing: border-box !important;
         }
 
-        /* Piros ÚJ Badge */
+        /* Első sori (Torrent név) konténer flex elrendezése */
+        .bh-title-container {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            width: 100% !important;
+            gap: 6px !important;
+        }
+
+        /* Piros ÚJ Badge - Jobbra igazítva */
         .new-tag {
-            background-color: #d9534f !important;
+            background-color: #be1400 !important;
             color: #ffffff !important;
-            margin-left: 6px !important;
+            margin-left: auto !important;
+            flex-shrink: 0 !important;
         }
 
         /* DL Badge & RSS Badge */
@@ -283,7 +290,16 @@
         .rss-badge.rss-removed { background-color: #dc3545 !important; }
         .rss-badge.rss-removed:hover { background-color: #c82333 !important; }
 
-        /* MÁSODIK SORI BADGE STÍLUSOK */
+        /* MÁSODIK SORI KONTÉNER & BADGE STÍLUSOK (Flex igazítással) */
+        .bh-second-row {
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 4px !important;
+            width: 100% !important;
+            margin-top: 3px !important;
+        }
+
         a.bh-info-badge, a.bh-info-badge:visited, a.bh-info-badge:link {
             background-color: #ffffff !important;
             color: #000000 !important;
@@ -291,7 +307,9 @@
             font-style: italic !important;
             font-weight: bold !important;
             font-size: 11px !important;
-            padding: 1px 6px !important;
+            width: 16px !important;
+            height: 16px !important;
+            padding: 0 !important;
             text-transform: lowercase !important;
         }
         a.bh-info-badge:hover {
@@ -299,11 +317,14 @@
             color: #000000 !important;
         }
 
+        /* Trailer gomb méretének szinkronizálása az i badge-hez */
         a.bh-trailer-badge, a.bh-trailer-badge:visited, a.bh-trailer-badge:link {
             background-color: #343a40 !important;
             color: #ffffff !important;
-            font-size: 11px !important;
-            padding: 1px 5px !important;
+            font-size: 10px !important;
+            width: 16px !important;
+            height: 16px !important;
+            padding: 0 !important;
         }
         a.bh-trailer-badge:hover {
             background-color: #495057 !important;
@@ -316,31 +337,39 @@
             font-weight: 900 !important;
             padding: 1px 5px !important;
             letter-spacing: 0px !important;
+            height: 16px !important;
         }
         a.bh-imdb-badge:hover {
             background-color: #e2b616 !important;
             color: #000000 !important;
         }
 
+        /* Kisebb műfaj badge-ek */
         a.bh-genre-badge, a.bh-genre-badge:visited, a.bh-genre-badge:link {
             background-color: #383838 !important;
             color: #e0e0e0 !important;
             font-weight: normal !important;
+            font-size: 8px !important;
             text-transform: lowercase !important;
-            padding: 1px 5px !important;
+            padding: 1px 4px !important;
+            height: 14px !important;
         }
         a.bh-genre-badge:hover {
             background-color: #4a4a4a !important;
             color: #ffffff !important;
         }
 
+        /* További változatok (+🠇) badge - Jobbra igazítva */
         a.bh-others-badge, a.bh-others-badge:visited, a.bh-others-badge:link {
             background-color: #17a2b8 !important;
             color: #000000 !important;
             font-size: 10px !important;
             font-weight: bold !important;
-            padding: 1px 5px !important;
+            padding: 1px 6px !important;
+            height: 16px !important;
             cursor: pointer;
+            margin-left: auto !important;
+            flex-shrink: 0 !important;
         }
         a.bh-others-badge:hover {
             background-color: #138496 !important;
@@ -353,13 +382,16 @@
         }
 
         .bh-badges-bottom-row {
-            display: block;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
             width: 100%;
             margin-top: 4px;
             line-height: 1;
         }
         .bh-badge-group {
-            display: inline-block;
+            display: inline-flex;
+            gap: 2px;
         }
 
         /* Felbontások */
@@ -763,7 +795,7 @@
                         if (text.includes('HDR')) addBadge(group1, 'HDR', 'bh-badge tech-hdr');
                         if (text.includes('DV.') || text.includes('DoVi') || text.includes('Dolby.Vision')) addBadge(group1, 'DoVi', 'bh-badge tech-dovi');
 
-                        // Audio & Codec + BDRip hozzáadva a BR csoporthoz
+                        // Audio & Codec + BDRip
                         if (text.includes('Atmos')) addBadge(group2, 'Atmos', 'bh-badge tech-atmos');
                         else if (text.includes('DDP') || text.includes('DD+') || text.includes('DD5')) addBadge(group2, '5.1', 'bh-badge tech-audio');
                         else if (text.includes('DD2') || text.includes('2.0')) addBadge(group2, 'STEREO', 'bh-badge tech-audio');
@@ -984,7 +1016,7 @@
                     }
                 });
 
-                // --- 7/B: ÚJ BADGE ---
+                // --- 7/B: ÚJ BADGE JOBBRA IGAZÍTÁSA ---
                 if (!nameCell.querySelector('.new-tag')) {
                     let hasNewFlag = false;
 
@@ -1003,18 +1035,27 @@
                         }
                     });
 
-                    if (hasNewFlag) {
-                        const newBadge = document.createElement('span');
-                        newBadge.className = 'bh-badge new-tag';
-                        newBadge.innerHTML = '&#218;J';
-                        nameLink.parentNode.insertBefore(newBadge, nameLink.nextSibling);
+                    // Cím sor átalakítása flex konténerré
+                    if (!nameLink.parentNode.classList.contains('bh-title-container')) {
+                        const titleWrapper = document.createElement('div');
+                        titleWrapper.className = 'bh-title-container';
+                        nameLink.parentNode.insertBefore(titleWrapper, nameLink);
+                        titleWrapper.appendChild(nameLink);
+
+                        if (hasNewFlag) {
+                            const newBadge = document.createElement('span');
+                            newBadge.className = 'bh-badge new-tag';
+                            newBadge.innerHTML = '&#218;J';
+                            titleWrapper.appendChild(newBadge);
+                        }
                     }
                 }
 
-                // --- 7/C: MÁSODIK SOR BADGE-ELÉSE ---
-                const secondRowDiv = nameCell.querySelector('div:not(.bh-badges-bottom-row)');
+                // --- 7/C: MÁSODIK SOR BADGE-ELÉSE & KÖZÉPRE IGAZÍTÁSA ---
+                const secondRowDiv = nameCell.querySelector('div:not(.bh-badges-bottom-row):not(.bh-title-container)');
                 if (secondRowDiv && !secondRowDiv.getAttribute('data-bh-badged')) {
                     secondRowDiv.setAttribute('data-bh-badged', 'true');
+                    secondRowDiv.classList.add('bh-second-row');
 
                     // 1. Info (i) gomb
                     const infoLink = secondRowDiv.querySelector('a img.Sblue-cover_icon')?.closest('a');
@@ -1102,7 +1143,7 @@
                         if (text.includes('DV.') || text.includes('DoVi') || text.includes('Dolby.Vision')) addBadge(group1, 'DoVi', 'bh-badge tech-dovi');
                         if (text.includes('Open.Matte') || text.includes('OpenMatte')) addBadge(group1, 'OpenMatte', 'bh-badge tech-codec');
 
-                        // CSOPORT 2 (SND) + BDRip
+                        // CSOPORT 2 (SND)
                         if (text.includes('Atmos')) addBadge(group2, 'Atmos', 'bh-badge tech-atmos');
                         else if (text.includes('DDP') || text.includes('DD+')) addBadge(group2, '5.1', 'bh-badge tech-audio');
                         else if (text.includes('DD2')) addBadge(group2, 'STEREO', 'bh-badge tech-audio');
