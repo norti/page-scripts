@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         bithumen.be [quality&info badges + advanced live filters]
 // @namespace    http://bithumen.be/
-// @version      9.5
+// @version      10.0
 // @description  bithumen add-on
-// @author       norti + Vector + Gemini AI + a-sync
+// @author       norti + Gemini AI/Claude AI
 // @match        https://bithumen.be/browse.php*
 // @match        https://bithumen.be/watchlist.php*
 // @icon         https://bithumen.be/favicon.ico
@@ -174,6 +174,12 @@
         .btn-type-movie.active { background-color: #6c757d !important; color: #fff !important; }
         .btn-type-series.active { background-color: #e84393 !important; color: #fff !important; }
 
+        .btn-show-info.active  { background-color: #ffffff !important; color: #000 !important; }
+        .btn-show-trailer.active { background-color: #343a40 !important; color: #fff !important; }
+        .btn-show-imdb.active  { background-color: #f5c518 !important; color: #000 !important; }
+        .btn-show-genre.active { background-color: #383838 !important; color: #fff !important; }
+        .btn-show-others.active { background-color: #17a2b8 !important; color: #000 !important; }
+
         .btn-show-row1.active  { background-color: #17a2b8 !important; }
         .btn-show-row2.active  { background-color: #17a2b8 !important; }
         .btn-show-row3.active  { background-color: #17a2b8 !important; }
@@ -228,7 +234,7 @@
             font-weight: bold;
         }
 
-        /* Badge-ek alapestílusai */
+        /* Badge-ek alapstílusai */
         .bh-badge {
             display: inline-flex !important;
             align-items: center !important;
@@ -246,6 +252,9 @@
             text-transform: uppercase;
             text-decoration: none !important;
             box-sizing: border-box !important;
+        }
+        .bh-badge.bh-hidden {
+            display: none !important;
         }
 
         /* Első sori (Torrent név) konténer flex elrendezése */
@@ -480,6 +489,13 @@
         'lang-eng': true,
         'type-movie': true,
         'type-series': true,
+        // Infosáv (2. sor) elemek állapota
+        'show-info': true,
+        'show-trailer': true,
+        'show-imdb': true,
+        'show-genre': true,
+        'show-others': true,
+        // Alsó sori Címkék állapota
         'show-row1': true,
         'show-row2': true,
         'show-row3': true,
@@ -515,7 +531,6 @@
         let isHun = hasHunInText;
         let isEng = hasEngInText;
 
-        // Ha sem HUN, sem ENG nem szerepel a névben szigorú formában, megvizsgáljuk a kategória nevét
         if (!hasHunInText && !hasEngInText) {
             const catName = ALL_CATEGORIES[catId] || '';
             if (catName.includes('/Hun') || catName.includes('Hun/')) {
@@ -549,6 +564,15 @@
                 <button class="bh-filter-btn btn-type-series ${activeFilters['type-series'] ? 'active' : ''}" data-filter="type-series">Sorozat</button>
 
                 <button id="bh-reset-btn" title="Sz&#251;r&#246;k alaphelyzetbe &#225;ll&#237;t&#225;sa">↺ Alaphelyzet</button>
+            </div>
+
+            <div class="bh-panel-row">
+                <strong>Infosáv:</strong>
+                <button class="bh-filter-btn btn-show-info ${activeFilters['show-info'] ? 'active' : ''}" data-filter="show-info" title="Info / Borító">i</button>
+                <button class="bh-filter-btn btn-show-trailer ${activeFilters['show-trailer'] ? 'active' : ''}" data-filter="show-trailer" title="Trailer">🎬 Trailer</button>
+                <button class="bh-filter-btn btn-show-imdb ${activeFilters['show-imdb'] ? 'active' : ''}" data-filter="show-imdb" title="IMDb értékelés">IMDb</button>
+                <button class="bh-filter-btn btn-show-genre ${activeFilters['show-genre'] ? 'active' : ''}" data-filter="show-genre" title="Műfajok">Műfaj</button>
+                <button class="bh-filter-btn btn-show-others ${activeFilters['show-others'] ? 'active' : ''}" data-filter="show-others" title="További verziók">+🠇 Verziók</button>
             </div>
 
             <div class="bh-panel-row">
@@ -698,6 +722,7 @@
     }
 
     function applyBadgeVisibility() {
+        // 1. Alsó Címke sorok láthatósága (Group 1-5)
         for (let i = 1; i <= 5; i++) {
             const groupElements = document.querySelectorAll(`.bh-badge-group-${i}`);
             const key = (i === 5) ? 'show-ser' : `show-row${i}`;
@@ -705,6 +730,27 @@
                 el.style.display = activeFilters[key] ? 'inline-block' : 'none';
             });
         }
+
+        // 2. Infosáv (Második sor) elemeinek láthatósága
+
+        document.querySelectorAll('.bh-info-badge').forEach(el => {
+            el.classList.toggle('bh-hidden', !activeFilters['show-info']);
+        });
+
+        document.querySelectorAll('.bh-trailer-badge').forEach(el => {
+            el.classList.toggle('bh-hidden', !activeFilters['show-trailer']);
+        });
+
+        document.querySelectorAll('.bh-imdb-badge').forEach(el => {
+            el.classList.toggle('bh-hidden', !activeFilters['show-imdb']);
+        });
+
+        document.querySelectorAll('.bh-others-badge').forEach(el => {
+            el.classList.toggle('bh-hidden', !activeFilters['show-others']);
+        });
+        document.querySelectorAll('.bh-genre-badge-wrapper').forEach(el => {
+            el.style.display = activeFilters['show-genre'] ? 'inline-flex' : 'none';
+        });
     }
 
     // 4. RSS TOGGLE LOGIKA
@@ -840,7 +886,7 @@
                     }
 
                     // Release Csoport (MINDEN KATEGÓRIÁNÁL MEGJELENIK)
-                    const rlsMatch = text.match(/-([A-Za-z0-9]+)$/);
+                    const rlsMatch = text.match(/-([A-Za-z0-9]+)(?:\s|\(|$)/);
                     if (rlsMatch && rlsMatch[1]) {
                         const grpBadge = addBadge(group4, rlsMatch[1], 'bh-badge grp-tag');
                         grpBadge.title = `Kattints a(z) "${rlsMatch[1]}" szűréséhez`;
@@ -1073,61 +1119,65 @@
                     }
                 }
 
-                // --- 7/C: MÁSODIK SOR BADGE-ELÉSE & KÖZÉPRE IGAZÍTÁSA ---
+                // --- 7/C: MÁSODIK SOR BADGE-ELÉSE & ELEMEK BEBEAZONOSÍTÁSA ---
                 const secondRowDiv = nameCell.querySelector('div:not(.bh-badges-bottom-row):not(.bh-title-container)');
                 if (secondRowDiv && !secondRowDiv.getAttribute('data-bh-badged')) {
                     secondRowDiv.setAttribute('data-bh-badged', 'true');
                     secondRowDiv.classList.add('bh-second-row');
 
-                    // 1. Info (i) gomb
-                    const infoLink = secondRowDiv.querySelector('a img.Sblue-cover_icon')?.closest('a');
-                    if (infoLink) {
-                        infoLink.className = 'bh-badge bh-info-badge';
-                        infoLink.innerHTML = 'i';
-                        infoLink.title = infoLink.title || 'Információ / Borító';
-                    }
+                    const links = Array.from(secondRowDiv.querySelectorAll('a'));
 
-                    // 2. Trailer gomb 🎬
-                    const trailerLink = secondRowDiv.querySelector('a img.Sblue-movie_icon')?.closest('a');
-                    if (trailerLink) {
-                        trailerLink.className = 'bh-badge bh-trailer-badge';
-                        trailerLink.innerHTML = '🎬';
-                        trailerLink.title = 'Előzetes megtekintése';
-                    }
+                    links.forEach(link => {
+                        const href = link.href || '';
+                        const img = link.querySelector('img');
+                        const imgSrc = img ? img.src : '';
 
-                    // 3. IMDb link
-                    const imdbLink = secondRowDiv.querySelector('a[href*="imdb.com"]');
-                    if (imdbLink) {
-                        const match = imdbLink.textContent.match(/imdb:\s*([\d\.]+)/i);
-                        const rating = match ? match[1] : '';
-                        imdbLink.className = 'bh-badge bh-imdb-badge';
-                        imdbLink.innerHTML = rating ? `IMDb ${rating}` : 'IMDb';
-                    }
+                        // 1. Info (i) gomb - Port.hu, TMDb vagy általános borító ikon / details link
+                        if (href.includes('port.hu') || href.includes('themoviedb.org') || imgSrc.includes('cover') || (img && img.classList.contains('Sblue-cover_icon'))) {
+                            link.classList.add('bh-badge', 'bh-info-badge');
+                            link.innerHTML = 'i';
+                            link.title = link.title || 'Információ / Borító';
+                        }
+                        // 2. Trailer gomb (YouTube beágyazott linkekhez)
+                        else if (href.includes('youtube.com') || href.includes('youtu.be') || imgSrc.includes('movie') || (img && img.classList.contains('Sblue-movie_icon'))) {
+                            link.classList.add('bh-badge', 'bh-trailer-badge');
+                            link.innerHTML = '🎬';
+                            link.title = 'Előzetes megtekintése';
+                        }
+                        // 3. IMDb link
+                        else if (href.includes('imdb.com')) {
+                            const match = link.textContent.match(/imdb:\s*([\d\.]+)/i);
+                            const rating = match ? match[1] : '';
+                            link.classList.add('bh-badge', 'bh-imdb-badge');
+                            link.innerHTML = rating ? `IMDb ${rating}` : 'IMDb';
+                        }
+                        // 4. További verziók gomb (+🠇)
+                        else if (href.includes('others=1') || imgSrc.includes('group') || (img && img.classList.contains('Sblue-group_icon'))) {
+                            link.classList.add('bh-badge', 'bh-others-badge');
+                            link.innerHTML = '+🠇';
 
-                    // 4. Műfajok
+                            link.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                toggleSubReleases(this, row);
+                            });
+                        }
+                    });
+
+                    // 5. Műfajok (Genre)
                     const genreSpan = secondRowDiv.querySelector('span');
                     if (genreSpan) {
+                        genreSpan.classList.add('bh-genre-badge-wrapper');
+                        genreSpan.style.display = 'inline-flex';
+                        genreSpan.style.gap = '4px';
+
                         const genreLinks = genreSpan.querySelectorAll('a');
                         genreLinks.forEach(gLink => {
-                            gLink.className = 'bh-badge bh-genre-badge';
+                            gLink.classList.add('bh-badge', 'bh-genre-badge');
                         });
 
                         genreSpan.innerHTML = '';
                         genreLinks.forEach(gLink => genreSpan.appendChild(gLink));
-                    }
-
-                    // 5. További verziók gomb (+🠇)
-                    const othersLink = secondRowDiv.querySelector('a img.Sblue-group_icon')?.closest('a') || secondRowDiv.querySelector('a[href*="others=1"]');
-
-                    if (othersLink) {
-                        othersLink.className = 'bh-badge bh-others-badge';
-                        othersLink.innerHTML = '+🠇';
-
-                        othersLink.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            toggleSubReleases(this, row);
-                        });
                     }
 
                     // Tisztítás
@@ -1193,7 +1243,7 @@
                     }
 
                     // CSOPORT 4 (RLS - Minden kategóriánál)
-                    const groupMatch = text.match(/-([A-Za-z0-9]+)$/);
+                    const groupMatch = text.match(/-([A-Za-z0-9]+)(?:\s|\(|$)/);
                     if (groupMatch && groupMatch[1]) {
                         const grpBadge = addBadge(group4, groupMatch[1], 'bh-badge grp-tag');
                         grpBadge.title = `Kattints a(z) "${groupMatch[1]}" sz&#251;r&#233;s&#233;hez`;
