@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bithumen.be DEV
 // @namespace    http://bithumen.be/
-// @version      10.3
+// @version      10.5
 // @description  bithumen add-on
 // @author       norti + Gemini AI/Claude AI
 // @match        https://bithumen.be/browse.php*
@@ -853,8 +853,8 @@
 
                     if (isVideoCategory) {
                         // Felbontás
-                        const has2160p = text.includes('2160p') || text.includes('UHD') || text.includes('4K');
-                        const has1080p = text.includes('1080p') || text.includes('1080i');
+                        const has2160p = text.includes('2160p') || text.includes('2160p.UHD') || text.includes('4K');
+                        const has1080p = text.includes('1080p') || text.includes('1080i') || text.includes('1080p.UHD');
                         const has720p  = text.includes('720p');
 
                         if (has2160p) addBadge(group1, '4K', 'bh-badge res-2160p');
@@ -1202,8 +1202,8 @@
 
                     if (isVideoCategory) {
                         // CSOPORT 1 (QTY)
-                        const has2160p = text.includes('2160p') || text.includes('UHD') || text.includes('4K');
-                        const has1080p = text.includes('1080p') || text.includes('1080i');
+                        const has2160p = text.includes('2160p') || text.includes('2160p.UHD') || text.includes('4K');
+                        const has1080p = text.includes('1080p') || text.includes('1080i') || text.includes('1080p.UHD');
                         const has720p  = text.includes('720p');
 
                         if (has2160p) addBadge(group1, '4K', 'bh-badge res-2160p');
