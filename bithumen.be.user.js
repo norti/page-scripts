@@ -144,7 +144,7 @@
         /* Reset Gomb */
         #bh-reset-btn {
             background-color: #d9534f;
-            border: 1px solid #c9302c;
+            border: 1px solid #be1400;
             color: #fff;
             padding: 3px 8px;
             border-radius: 3px;
@@ -156,7 +156,7 @@
             margin-left: auto;
         }
         #bh-reset-btn:hover {
-            background-color: #c9302c;
+            background-color: #be1400;
         }
 
         /* Szűrőgombok egyedi színei */
