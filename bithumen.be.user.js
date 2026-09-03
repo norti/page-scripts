@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         bithumen.be [quality&info badges + advanced live filters]
 // @namespace    http://bithumen.be/
-// @version      9.3
-// @description  bithumen add-on badge-elt info sorral, élő szűrőkkel, igazított 2. sori badge-ekkel és jobbra zárt gombokkal
+// @version      9.5
+// @description  bithumen add-on
 // @author       norti + Vector + Gemini AI + a-sync
 // @match        https://bithumen.be/browse.php*
 // @match        https://bithumen.be/watchlist.php*
@@ -504,6 +504,30 @@
         return null;
     }
 
+    // Segédfüggvény: Nyelv meghatározása pontos pont-határolókkal + kategória név fallbackkel
+    function detectLanguage(text, catId) {
+        const hunRegex = /(?:\.|\b)(?:HUN|HU)(?:\.|\b|-)/i;
+        const engRegex = /(?:\.|\b)(?:ENG|EN|ENGLISH)(?:\.|\b|-)/i;
+
+        const hasHunInText = hunRegex.test(text);
+        const hasEngInText = engRegex.test(text);
+
+        let isHun = hasHunInText;
+        let isEng = hasEngInText;
+
+        // Ha sem HUN, sem ENG nem szerepel a névben szigorú formában, megvizsgáljuk a kategória nevét
+        if (!hasHunInText && !hasEngInText) {
+            const catName = ALL_CATEGORIES[catId] || '';
+            if (catName.includes('/Hun') || catName.includes('Hun/')) {
+                isHun = true;
+            } else if (catName.includes('/Eng') || catName.includes('Eng/')) {
+                isEng = true;
+            }
+        }
+
+        return { isHun, isEng };
+    }
+
 
     // 3. SZŰRŐ PANEL LÉTREHOZÁSA
     function createFilterPanel() {
@@ -809,12 +833,10 @@
                         if (text.includes('x265') || text.includes('H.265') || text.includes('HEVC')) addBadge(group2, 'x265', 'bh-badge tech-codec');
                         else if (text.includes('x264') || text.includes('H.264')) addBadge(group2, 'x264', 'bh-badge tech-codec');
 
-                        // Nyelv
-                        const isHun = text.includes('HUN') || text.includes('HuN') || text.includes('Hun') || text.includes('.HU.');
-                        const isEng = text.includes('ENG') || text.includes('Eng') || text.includes('.EN.') || !isHun;
-
-                        if (isHun) addBadge(group3, 'HUN', 'bh-badge lang-hun');
-                        if (isEng) addBadge(group3, 'ENG', 'bh-badge lang-eng');
+                        // Nyelv (detektálás név + kategória név fallbackkel)
+                        const langInfo = detectLanguage(text, catId);
+                        if (langInfo.isHun) addBadge(group3, 'HUN', 'bh-badge lang-hun');
+                        if (langInfo.isEng) addBadge(group3, 'ENG', 'bh-badge lang-eng');
                     }
 
                     // Release Csoport (MINDEN KATEGÓRIÁNÁL MEGJELENIK)
@@ -1158,12 +1180,10 @@
                         if (text.includes('x265') || text.includes('H.265') || text.includes('HEVC') || text.includes('H265')) addBadge(group2, 'x265', 'bh-badge tech-codec');
                         else if (text.includes('x264') || text.includes('H.264') || text.includes('H264')) addBadge(group2, 'x264', 'bh-badge tech-codec');
 
-                        // CSOPORT 3 (LNG)
-                        const isHun = text.includes('HUN') || text.includes('HuN') || text.includes('Hun') || text.includes('.HU.');
-                        const isEng = text.includes('ENG') || text.includes('Eng') || text.includes('.EN.') || text.includes('English') || !isHun;
-
-                        if (isHun) addBadge(group3, 'HUN', 'bh-badge lang-hun');
-                        if (isEng) addBadge(group3, 'ENG', 'bh-badge lang-eng');
+                        // CSOPORT 3 (LNG) - Nyelv detektálás név + kategória név fallbackkel
+                        const langInfo = detectLanguage(text, catId);
+                        if (langInfo.isHun) addBadge(group3, 'HUN', 'bh-badge lang-hun');
+                        if (langInfo.isEng) addBadge(group3, 'ENG', 'bh-badge lang-eng');
 
                         // CSOPORT 5 (SER)
                         const isSeriesMatch = text.match(/\b(?:S\d+(?:E\d+)?|E\d+)\b/i);
