@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         bithumen.be [quality&info badges + advanced live filters]
+// @name         bithumen.be DEV
 // @namespace    http://bithumen.be/
-// @version      10.0
+// @version      10.3
 // @description  bithumen add-on
 // @author       norti + Gemini AI/Claude AI
 // @match        https://bithumen.be/browse.php*
@@ -563,16 +563,16 @@
                 <button class="bh-filter-btn btn-type-movie ${activeFilters['type-movie'] ? 'active' : ''}" data-filter="type-movie">Film</button>
                 <button class="bh-filter-btn btn-type-series ${activeFilters['type-series'] ? 'active' : ''}" data-filter="type-series">Sorozat</button>
 
-                <button id="bh-reset-btn" title="Sz&#251;r&#246;k alaphelyzetbe &#225;ll&#237;t&#225;sa">↺ Alaphelyzet</button>
+                <button id="bh-reset-btn" title="Szűrők alaphelyzetbe állítása">↺</button>
             </div>
 
             <div class="bh-panel-row">
                 <strong>Infosáv:</strong>
                 <button class="bh-filter-btn btn-show-info ${activeFilters['show-info'] ? 'active' : ''}" data-filter="show-info" title="Info / Borító">i</button>
-                <button class="bh-filter-btn btn-show-trailer ${activeFilters['show-trailer'] ? 'active' : ''}" data-filter="show-trailer" title="Trailer">🎬 Trailer</button>
+                <button class="bh-filter-btn btn-show-trailer ${activeFilters['show-trailer'] ? 'active' : ''}" data-filter="show-trailer" title="Trailer">🎬</button>
                 <button class="bh-filter-btn btn-show-imdb ${activeFilters['show-imdb'] ? 'active' : ''}" data-filter="show-imdb" title="IMDb értékelés">IMDb</button>
                 <button class="bh-filter-btn btn-show-genre ${activeFilters['show-genre'] ? 'active' : ''}" data-filter="show-genre" title="Műfajok">Műfaj</button>
-                <button class="bh-filter-btn btn-show-others ${activeFilters['show-others'] ? 'active' : ''}" data-filter="show-others" title="További verziók">+🠇 Verziók</button>
+                <button class="bh-filter-btn btn-show-others ${activeFilters['show-others'] ? 'active' : ''}" data-filter="show-others" title="További verziók">+🠇</button>
             </div>
 
             <div class="bh-panel-row">
@@ -587,8 +587,8 @@
             <div class="bh-search-row">
                 <strong>Élő szűrés:</strong>
                 <div class="bh-search-wrapper">
-                    <input type="text" id="bh-search-input" placeholder="Keres&#233;s a tal&#225;latok k&#246;z&#246;tt..." />
-                    <span id="bh-search-clear" title="T&#246;rl&#233;s (ESC)">&times;</span>
+                    <input type="text" id="bh-search-input" placeholder="Keresés a találatok között..." />
+                    <span id="bh-search-clear" title="Törlés (ESC)">&times;</span>
                 </div>
                 <span id="bh-count-display"></span>
             </div>
