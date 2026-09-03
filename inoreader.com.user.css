@@ -139,7 +139,7 @@
     :is(.theme_light, .theme_sepia, .theme_aqua) .text-muted-color {
         color: #434343 !important;
     }
-    
+  
     .theme_light .tab-label {
         color: #000 !important;
     }    
@@ -147,6 +147,15 @@
     :is(.theme_sepia, .theme_aqua) .tab-label {
         color: #fff !important;
     }    
+
+    /* Article header date styling */
+    .header_date.text-muted-color {
+        color: #000 !important;
+        background: #fff !important;
+        border: 1px solid #000 !important;
+        border-radius: 6px !important;
+        padding: 0px 6px 0px 6px !important;
+    }
     
     /* Mark as read buttons */
     .mark_section_read,
