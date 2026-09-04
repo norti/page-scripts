@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bithumen.be DEV
 // @namespace    http://bithumen.be/
-// @version      10.5
+// @version      10.7
 // @description  bithumen add-on
 // @author       norti + Gemini AI/Claude AI
 // @match        https://bithumen.be/browse.php*
@@ -57,7 +57,9 @@
         #logoholderdiv {
             display: none !important;
         }
-
+        td.colhead {
+            color: #ffffff !important;
+        }
         /* Szűrő Panel */
         #bh-filter-panel {
             background-color: #1a1a1a;
@@ -999,7 +1001,7 @@
             if (colhead) {
                 const actionTh = document.createElement('td');
                 actionTh.className = 'colhead bh-action-th';
-                actionTh.textContent = 'DL';
+                actionTh.textContent = 'Letöltés';
                 actionTh.title = 'Torrent letöltése/hozzáadás saját RSS-hez';
 
                 const cells = headerRow.querySelectorAll('td');
