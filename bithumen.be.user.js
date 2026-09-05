@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bithumen.be DEV
 // @namespace    http://bithumen.be/
-// @version      10.7
+// @version      10.9
 // @description  bithumen add-on
 // @author       norti + Gemini AI/Claude AI
 // @match        https://bithumen.be/browse.php*
@@ -574,12 +574,12 @@
                 <button class="bh-filter-btn btn-show-trailer ${activeFilters['show-trailer'] ? 'active' : ''}" data-filter="show-trailer" title="Trailer">🎬</button>
                 <button class="bh-filter-btn btn-show-imdb ${activeFilters['show-imdb'] ? 'active' : ''}" data-filter="show-imdb" title="IMDb értékelés">IMDb</button>
                 <button class="bh-filter-btn btn-show-genre ${activeFilters['show-genre'] ? 'active' : ''}" data-filter="show-genre" title="Műfajok">Műfaj</button>
-                <button class="bh-filter-btn btn-show-others ${activeFilters['show-others'] ? 'active' : ''}" data-filter="show-others" title="További verziók">+🠇</button>
+                <button class="bh-filter-btn btn-show-others ${activeFilters['show-others'] ? 'active' : ''}" data-filter="show-others" title="További verziók">+</button>
             </div>
 
             <div class="bh-panel-row">
                 <strong>Címkék:</strong>
-                <button class="bh-filter-btn btn-show-row1 ${activeFilters['show-row1'] ? 'active' : ''}" data-filter="show-row1" title="Felbont&#225;s">Felbont&#225;s</button>
+                <button class="bh-filter-btn btn-show-row1 ${activeFilters['show-row1'] ? 'active' : ''}" data-filter="show-row1" title="Felbont&#225;s">Felbontás</button>
                 <button class="bh-filter-btn btn-show-row2 ${activeFilters['show-row2'] ? 'active' : ''}" data-filter="show-row2" title="Audio+codec info">Info</button>
                 <button class="bh-filter-btn btn-show-row3 ${activeFilters['show-row3'] ? 'active' : ''}" data-filter="show-row3" title="Nyelv">Nyelv</button>
                 <button class="bh-filter-btn btn-show-row4 ${activeFilters['show-row4'] ? 'active' : ''}" data-filter="show-row4" title="Release Csoport">RLSGRP</button>
@@ -928,10 +928,10 @@
         if (subRow && subRow.classList.contains('bh-subreleases-row')) {
             if (subRow.style.display === 'none') {
                 subRow.style.display = '';
-                othersLink.innerHTML = '-🠇';
+                othersLink.innerHTML = '-';
             } else {
                 subRow.style.display = 'none';
-                othersLink.innerHTML = '+🠇';
+                othersLink.innerHTML = '+';
             }
             return;
         }
@@ -952,7 +952,7 @@
         subRow.appendChild(subTd);
         parentRow.parentNode.insertBefore(subRow, parentRow.nextSibling);
 
-        othersLink.innerHTML = '-🠇';
+        othersLink.innerHTML = '-';
 
         const parentCatId = getCategoryIdFromRow(parentRow);
 
@@ -1060,7 +1060,7 @@
                             dlBadge.href = href;
                             dlBadge.className = 'bh-badge dl-badge';
                             dlBadge.textContent = 'DL';
-                            dlBadge.title = 'Let&#246;lt&#233;s';
+                            dlBadge.title = 'Letöltés';
                             actionContainer.appendChild(dlBadge);
                         }
                         a.classList.add('bh-hide-original');
@@ -1115,7 +1115,7 @@
                         if (hasNewFlag) {
                             const newBadge = document.createElement('span');
                             newBadge.className = 'bh-badge new-tag';
-                            newBadge.innerHTML = '&#218;J';
+                            newBadge.innerHTML = 'ÚJ';
                             titleWrapper.appendChild(newBadge);
                         }
                     }
@@ -1156,7 +1156,7 @@
                         // 4. További verziók gomb (+🠇)
                         else if (href.includes('others=1') || imgSrc.includes('group') || (img && img.classList.contains('Sblue-group_icon'))) {
                             link.classList.add('bh-badge', 'bh-others-badge');
-                            link.innerHTML = '+🠇';
+                            link.innerHTML = '+';
 
                             link.addEventListener('click', function(e) {
                                 e.preventDefault();
@@ -1248,7 +1248,7 @@
                     const groupMatch = text.match(/-([A-Za-z0-9]+)(?:\s|\(|$)/);
                     if (groupMatch && groupMatch[1]) {
                         const grpBadge = addBadge(group4, groupMatch[1], 'bh-badge grp-tag');
-                        grpBadge.title = `Kattints a(z) "${groupMatch[1]}" sz&#251;r&#233;s&#233;hez`;
+                        grpBadge.title = `Kattints a(z) "${groupMatch[1]}" szűréshez`;
                         grpBadge.addEventListener('click', function(e) {
                             e.preventDefault();
                             e.stopPropagation();
