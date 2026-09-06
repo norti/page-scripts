@@ -1,0 +1,97 @@
+/* ==UserStyle==
+@name           inoreader.com header rearranged
+@namespace      norti
+@author         norti - https://bsky.app/profile/norti79.bsky.social
+@description    Left: Mark all as read / Unread-All / Search | Right: Newsfeed + Bulk actions + Refresh + More menu
+@version        20260906.0800
+@homepageURL    https://userstyles.world/style/30021/
+@license        MIT License
+@preprocessor   uso
+==/UserStyle== */
+@-moz-document domain("inoreader.com") {
+  .heading-feeds {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    gap: 0.5rem !important;
+  }
+
+  /*
+   * The controls we care about are nested several levels deep
+   * (heading-feeds > flex-grow-1 > header-controls > header-right-controls > ul > li).
+   * display:contents "dissolves" each wrapper so its children become
+   * direct flex items of .heading-feeds, which lets us reorder everything
+   * with a single flat set of `order` values.
+   * Child combinators (>) are used throughout so we only ever touch the
+   * TOP toolbar - the visually-identical duplicate markup inside the
+   * "More" popup (#header-right-controls appears twice in the DOM) is
+   * never matched.
+   */
+  .heading-feeds > .flex.flex-grow-1,
+  .heading-feeds > .flex.flex-grow-1 > #header-controls,
+  .heading-feeds
+    > .flex.flex-grow-1
+    > #header-controls
+    > #header-right-controls,
+  .heading-feeds
+    > .flex.flex-grow-1
+    > #header-controls
+    > #header-right-controls
+    > ul.nav-toolbar {
+    display: contents !important;
+  }
+
+  /* Kill the old auto-margins - order + the spacer below do the alignment now */
+  .heading-feeds > .flex.heading-title,
+  .heading-feeds > .flex.flex-grow-1 > .ml-auto {
+    margin: 0 !important;
+  }
+
+  /* ---------- LEFT-aligned group ---------- */
+
+  /* Mark all as read */
+  .heading-feeds li:has(.inno_toolbar_button_mark_read) {
+    order: 1 !important;
+  }
+
+  /* Unread / All articles segmented control */
+  .heading-feeds li:has(#show_articles_menu) {
+    order: 2 !important;
+  }
+
+  /* Search in articles */
+  .heading-feeds li.search-input-wrapper {
+    order: 3 !important;
+  }
+
+  /* ---------- Flexible spacer (pushes the rest to the right) ---------- */
+
+  .heading-feeds > .flex.flex-grow-1 > #header-controls > .subheading {
+    order: 4 !important;
+    flex: 1 1 auto !important;
+  }
+
+  /* ---------- RIGHT-aligned group ---------- */
+
+  /* "Newsfeed" title + dropdown + filter icon */
+  .heading-feeds > .flex.heading-title {
+    order: 5 !important;
+    flex: 0 0 auto !important;
+  }
+
+  /* Bulk actions */
+  .heading-feeds li.select-mode-bar {
+    order: 6 !important;
+  }
+
+  /* Refresh (not mentioned explicitly, kept grouped with the other icon buttons) */
+  .heading-feeds li.refresh-articles-bar {
+    order: 7 !important;
+  }
+
+  /* More (...) menu */
+  .heading-feeds > .flex.flex-grow-1 > .ml-auto {
+    order: 8 !important;
+    flex: 0 0 auto !important;
+  }
+}
