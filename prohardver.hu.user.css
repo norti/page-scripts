@@ -1,24 +1,26 @@
 /* ==UserStyle==
 @name         prohardver.hu fórum fix 2026
-@version      20260505.17.08
+@version      20260906.0800
 @namespace    norti
 @author       norti - https://bsky.app/profile/norti79.bsky.social
 @description  prohardver.hu téma fix 2026
+@homepageURL  https://userstyles.world/style/27956/
 @license      NO-REDISTRIBUTION
 ==/UserStyle== */
 
-@-moz-document url-prefix("https://prohardver.hu/") {
-.message-head-infos .message-id {
+@-moz-document url-prefix("https://prohardver.hu/")
+{
+  .message-head-infos .message-id {
     color: #9d2e2b !important;
     font-weight: bold !important;
-}
-.message-head-btn,
-.message-head-btn:hover {
+  }
+  .message-head-btn,
+  .message-head-btn:hover {
     color: #9d2e2b !important;
     font-weight: bold !important;
-}
+  }
 
-.message-head-infos .message-time {
+  .message-head-infos .message-time {
     font-style: italic !important;
-}
+  }
 }
