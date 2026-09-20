@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         bithumen.be DEV3
+// @name         bithumen.be DEV Claude
 // @namespace    http://bithumen.be/
-// @version      12.2
+// @version      13.0
 // @description  bithumen add-on (optimalizált)
 // @author       norti + Gemini AI/Claude AI
 // @match        https://bithumen.be/browse.php*
