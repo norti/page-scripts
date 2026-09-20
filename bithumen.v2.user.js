@@ -1,11 +1,13 @@
 // ==UserScript==
-// @name         bithumen.be DEV Claude
+// @name         bithumen.be [quality&info badges + advanced live filters]
 // @namespace    http://bithumen.be/
-// @version      13.0
-// @description  bithumen add-on (optimalizált)
+// @version      11.0
+// @description  bithumen add-on
 // @author       norti + Gemini AI/Claude AI
 // @match        https://bithumen.be/browse.php*
 // @match        https://bithumen.be/watchlist.php*
+// @match        https://bithumen.net/browse.php*
+// @match        https://bithumen.net/watchlist.php*
 // @icon         https://bithumen.be/favicon.ico
 // @grant        none
 // @license      MIT
