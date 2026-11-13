@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bithumen.be [quality&info badges + advanced live filters]
 // @namespace    http://bithumen.be/
-// @version      11.0
+// @version      12.0
 // @description  bithumen add-on
 // @author       norti + Gemini AI/Claude AI
 // @match        https://bithumen.be/browse.php*
@@ -219,35 +219,35 @@ ${genRules(
 
 a.bh-info-badge, a.bh-info-badge:link, a.bh-info-badge:visited {
     background-color: #fff !important; color: #000 !important;
-    font-family: Georgia, serif !important; font-style: italic !important;
-    font-weight: bold !important; font-size: 11px !important;
-    width: 16px !important; height: 16px !important; padding: 0 !important;
+    font-family: Georgia, serif !important;
+    font-weight: bold !important; font-size: 9px !important;
+    width: 12px !important; height: 12px !important; padding: 0 !important;
     text-transform: lowercase !important;
 }
 a.bh-info-badge:hover { background-color: #ddd !important; color: #000 !important; }
 
 a.bh-trailer-badge, a.bh-trailer-badge:link, a.bh-trailer-badge:visited {
-    background-color: #343a40 !important; color: #fff !important; font-size: 10px !important;
-    width: 16px !important; height: 16px !important; padding: 0 !important;
+    background-color: #343a40 !important; color: #fff !important; font-size: 9px !important;
+    width: 12px !important; height: 12px !important; padding: 0 !important;
 }
 a.bh-trailer-badge:hover { background-color: #495057 !important; }
 
 a.bh-imdb-badge, a.bh-imdb-badge:link, a.bh-imdb-badge:visited {
     background-color: #f5c518 !important; color: #000 !important; font-weight: 900 !important;
-    padding: 1px 5px !important; letter-spacing: 0 !important; height: 16px !important;
+    padding: 1px 4px !important; letter-spacing: 0 !important; height: 12px !important;
 }
 a.bh-imdb-badge:hover { background-color: #e2b616 !important; color: #000 !important; }
 
 a.bh-genre-badge, a.bh-genre-badge:link, a.bh-genre-badge:visited {
     background-color: #383838 !important; color: #e0e0e0 !important; font-weight: normal !important;
     font-size: 8px !important; text-transform: lowercase !important;
-    padding: 1px 4px !important; height: 14px !important;
+    padding: 1px 4px !important; height: 12px !important;
 }
 a.bh-genre-badge:hover { background-color: #4a4a4a !important; color: #fff !important; }
 
 a.bh-others-badge, a.bh-others-badge:link, a.bh-others-badge:visited {
     background-color: #17a2b8 !important; color: #000 !important; font-size: 10px !important;
-    font-weight: bold !important; padding: 1px 6px !important; height: 16px !important;
+    font-weight: bold !important; padding: 1px 4px !important; height: 12px !important;
     cursor: pointer; margin-left: auto !important; flex-shrink: 0 !important;
 }
 a.bh-others-badge:hover { background-color: #138496 !important; color: #000 !important; }
